@@ -25,7 +25,7 @@ const PrimaryActionCard = ({ tutorName = "Alex", tutorStyle = "Exam-focused Tuto
             </div>
 
             <div className="flex flex-col sm:items-end gap-3 w-full sm:w-auto">
-                <Link href="/dashboard/call">
+                <Link href="/call">
                     <button className="btn-base btn-blue py-3 px-8 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 w-full sm:w-auto">
                         <Mic size={20} />
                         Start voice session

@@ -180,7 +180,7 @@ export default function TutorPage() {
                     className="fixed bottom-8 right-8 z-30"
                 >
                     {/* <link rel="import" href="component.html" /> */}
-                    <Link href="/dashboard/call">
+                    <Link href="/call">
                         <button className="flex items-center gap-3 bg-[#1E2A5E] text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-900/20 hover:bg-[#15204a] hover:scale-105 transition-all text-lg border border-indigo-700">
                             <Mic size={24} />
                             Start voice session
