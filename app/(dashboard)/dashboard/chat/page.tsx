@@ -1,86 +1,23 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Upload, Paperclip, Send, RefreshCw, Bot, User, Plus } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { Sparkles, Upload, Send, RefreshCw, Bot, User, Plus } from "lucide-react";
+import { useRef, useEffect } from "react";
 import clsx from "clsx";
-
-interface Message {
-    id: string;
-    role: "user" | "assistant";
-    content: string;
-    type?: "text" | "table";
-    tableData?: { headers: string[]; rows: string[][] };
-}
-
-// Mock AI responses related to Math
-const MOCK_RESPONSES: Record<string, Message> = {
-    default: {
-        id: "1",
-        role: "assistant",
-        content: "I can help you with various math topics! Try asking about calculus, linear algebra, differential equations, or any specific problem you're working on.",
-        type: "text"
-    },
-    eigenvalues: {
-        id: "2",
-        role: "assistant",
-        content: "Here's a summary of key concepts about Eigenvalues and Eigenvectors:",
-        type: "table",
-        tableData: {
-            headers: ["Concept", "Definition", "Formula", "Key Property"],
-            rows: [
-                ["Eigenvalue (λ)", "Scalar that scales the eigenvector", "Av = λv", "det(A - λI) = 0"],
-                ["Eigenvector (v)", "Non-zero vector unchanged in direction", "(A - λI)v = 0", "Spans eigenspace"],
-                ["Characteristic Polynomial", "Polynomial whose roots are eigenvalues", "det(A - λI)", "Degree = n"],
-                ["Diagonalization", "A = PDP⁻¹ where D is diagonal", "P = [v₁ v₂ ... vₙ]", "Requires n independent eigenvectors"],
-                ["Trace", "Sum of eigenvalues", "tr(A) = Σλᵢ", "Also sum of diagonal entries"],
-                ["Determinant", "Product of eigenvalues", "det(A) = Πλᵢ", "Zero if singular"],
-            ]
-        }
-    },
-    calculus: {
-        id: "3",
-        role: "assistant",
-        content: "Here's a quick reference for common Calculus formulas:",
-        type: "table",
-        tableData: {
-            headers: ["Rule/Formula", "Expression", "Result", "Notes"],
-            rows: [
-                ["Power Rule", "d/dx[xⁿ]", "nxⁿ⁻¹", "n can be any real number"],
-                ["Product Rule", "d/dx[f·g]", "f'g + fg'", "For products of functions"],
-                ["Chain Rule", "d/dx[f(g(x))]", "f'(g(x))·g'(x)", "Composite functions"],
-                ["Integration by Parts", "∫u dv", "uv - ∫v du", "Choose u wisely (LIATE)"],
-                ["Fundamental Theorem", "∫ₐᵇ f(x)dx", "F(b) - F(a)", "F is antiderivative of f"],
-                ["L'Hôpital's Rule", "lim f/g (0/0 form)", "lim f'/g'", "Apply when indeterminate"],
-            ]
-        }
-    },
-    diffeq: {
-        id: "4",
-        role: "assistant",
-        content: "Here's a breakdown of First-Order Differential Equations:\n\n**Separable Equations**: dy/dx = f(x)g(y) → ∫(1/g(y))dy = ∫f(x)dx\n\n**Linear First-Order**: dy/dx + P(x)y = Q(x)\nSolution: y = (1/μ)∫μQ(x)dx where μ = e^(∫P(x)dx)\n\n**Exact Equations**: M(x,y)dx + N(x,y)dy = 0 is exact if ∂M/∂y = ∂N/∂x\n\n**Tip**: Always check if the equation is separable first—it's usually the easiest method!",
-        type: "text"
-    }
-};
-
-function getAIResponse(query: string): Message {
-    const lowerQuery = query.toLowerCase();
-    if (lowerQuery.includes("eigen") || lowerQuery.includes("vector") || lowerQuery.includes("matrix")) {
-        return { ...MOCK_RESPONSES.eigenvalues, id: Date.now().toString() };
-    }
-    if (lowerQuery.includes("calculus") || lowerQuery.includes("derivative") || lowerQuery.includes("integral")) {
-        return { ...MOCK_RESPONSES.calculus, id: Date.now().toString() };
-    }
-    if (lowerQuery.includes("differential") || lowerQuery.includes("ode") || lowerQuery.includes("equation")) {
-        return { ...MOCK_RESPONSES.diffeq, id: Date.now().toString() };
-    }
-    return { ...MOCK_RESPONSES.default, id: Date.now().toString() };
-}
+import { useChat } from 'ai/react';
+import ReactMarkdown from 'react-markdown';
 
 export default function ChatPage() {
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [query, setQuery] = useState("");
-    const [isGenerating, setIsGenerating] = useState(false);
+    // 1. Vercel AI SDK Hook
+    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+        api: '/api/chat',
+        initialMessages: [{
+            id: '1',
+            role: 'assistant',
+            content: "Hi there! I'm ReedAI. How can I help you with your studies today?"
+        }]
+    });
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -91,27 +28,7 @@ export default function ChatPage() {
         scrollToBottom();
     }, [messages]);
 
-    const handleSend = () => {
-        if (!query.trim() || isGenerating) return;
-
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: "user",
-            content: query,
-            type: "text"
-        };
-        setMessages(prev => [...prev, userMessage]);
-        setQuery("");
-        setIsGenerating(true);
-
-        setTimeout(() => {
-            const aiResponse = getAIResponse(userMessage.content);
-            setMessages(prev => [...prev, aiResponse]);
-            setIsGenerating(false);
-        }, 1500);
-    };
-
-    const hasMessages = messages.length > 0;
+    const hasMessages = messages.length > 1; // > 1 because we have initial greeting
 
     return (
         <div className="min-h-screen bg-[#F8F9FB] font-dm-sans relative flex flex-col">
@@ -127,7 +44,7 @@ export default function ChatPage() {
             <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
 
                 {/* Empty State / Input Prompt */}
-                {!hasMessages && !isGenerating && (
+                {!hasMessages && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -158,40 +75,48 @@ export default function ChatPage() {
                             </div>
 
                             {/* Textarea */}
-                            <textarea
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Ask anything you'd like to know..."
-                                className="w-full h-32 px-5 py-4 bg-transparent resize-none focus:outline-none text-gray-700 placeholder:text-gray-400 text-sm"
-                            />
+                            <form onSubmit={handleSubmit}>
+                                <textarea
+                                    value={input}
+                                    onChange={handleInputChange}
+                                    placeholder="Ask anything you'd like to know..."
+                                    className="w-full h-32 px-5 py-4 bg-transparent resize-none focus:outline-none text-gray-700 placeholder:text-gray-400 text-sm"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSubmit(e as any);
+                                        }
+                                    }}
+                                />
 
-                            {/* Bottom Toolbar */}
-                            <div className="flex items-center justify-between px-5 pb-5 pt-2">
-                                <div className="flex items-center gap-4">
-                                    <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
-                                        <Upload size={16} /> Upload image
-                                    </button>
-                                    <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
-                                        <Plus size={16} /> Add attachment
+                                {/* Bottom Toolbar */}
+                                <div className="flex items-center justify-between px-5 pb-5 pt-2">
+                                    <div className="flex items-center gap-4">
+                                        <button type="button" className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
+                                            <Upload size={16} /> Upload image
+                                        </button>
+                                        <button type="button" className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
+                                            <Plus size={16} /> Add attachment
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={!input.trim() || isLoading}
+                                        className={clsx(
+                                            "flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all",
+                                            input.trim()
+                                                ? "bg-[#1A1D2D] text-white hover:bg-black shadow-lg"
+                                                : "bg-[#1A1D2D]/80 text-white/80 cursor-not-allowed"
+                                        )}
+                                    >
+                                        Generate with AI <Sparkles size={14} />
                                     </button>
                                 </div>
-
-                                <button
-                                    onClick={handleSend}
-                                    disabled={!query.trim() || isGenerating}
-                                    className={clsx(
-                                        "flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all",
-                                        query.trim()
-                                            ? "bg-[#1A1D2D] text-white hover:bg-black shadow-lg"
-                                            : "bg-[#1A1D2D]/80 text-white/80 cursor-not-allowed"
-                                    )}
-                                >
-                                    Generate with AI <Sparkles size={14} />
-                                </button>
-                            </div>
+                            </form>
 
                             {/* Progress Bar (During Generation) */}
-                            {isGenerating && (
+                            {isLoading && (
                                 <motion.div
                                     initial={{ width: "0%" }}
                                     animate={{ width: "100%" }}
@@ -208,8 +133,6 @@ export default function ChatPage() {
                                 {[
                                     { title: "Linear Algebra: Eigenvalues", date: "Today" },
                                     { title: "Calculus III Review", date: "Yesterday" },
-                                    { title: "Differential Equations Intro", date: "2 days ago" },
-                                    { title: "Probability Basics", date: "Last week" },
                                 ].map((chat, i) => (
                                     <button
                                         key={i}
@@ -229,11 +152,11 @@ export default function ChatPage() {
 
                 {/* Conversation View */}
                 {hasMessages && (
-                    <div className="w-full max-w-4xl flex-1 flex flex-col">
+                    <div className="w-full max-w-4xl flex-1 flex flex-col pt-4">
                         {/* Messages */}
                         <div className="flex-1 space-y-6 pb-48 overflow-y-auto">
                             <AnimatePresence>
-                                {messages.map((msg) => (
+                                {messages.map((msg: any) => (
                                     <motion.div
                                         key={msg.id}
                                         initial={{ opacity: 0, y: 10 }}
@@ -244,7 +167,7 @@ export default function ChatPage() {
                                         )}
                                     >
                                         {msg.role === "assistant" && (
-                                            <div className="w-10 h-10 rounded-xl bg-[#1E2A5E] text-white flex items-center justify-center shrink-0 shadow-lg">
+                                            <div className="w-10 h-10 rounded-xl bg-[#1E2A5E] text-white flex items-center justify-center shrink-0 shadow-lg mt-2">
                                                 <Bot size={20} />
                                             </div>
                                         )}
@@ -255,41 +178,15 @@ export default function ChatPage() {
                                                 ? "bg-[#1E2A5E] text-white"
                                                 : "bg-white border border-gray-100"
                                         )}>
-                                            {msg.type === "table" && msg.tableData ? (
-                                                <div className="space-y-3">
-                                                    <p className="text-gray-700 mb-4">{msg.content}</p>
-                                                    <div className="overflow-x-auto rounded-xl border border-gray-100">
-                                                        <table className="w-full text-left text-sm">
-                                                            <thead className="bg-gray-50 text-gray-500 font-medium">
-                                                                <tr>
-                                                                    {msg.tableData.headers.map((h, i) => (
-                                                                        <th key={i} className="px-4 py-3 whitespace-nowrap">{h}</th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody className="divide-y divide-gray-50">
-                                                                {msg.tableData.rows.map((row, i) => (
-                                                                    <tr key={i} className="hover:bg-gray-50/50">
-                                                                        {row.map((cell, j) => (
-                                                                            <td key={j} className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                                                                                {cell}
-                                                                            </td>
-                                                                        ))}
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <p className={clsx("whitespace-pre-wrap text-sm", msg.role === "user" ? "text-white" : "text-gray-700")}>
+                                            <div className={clsx("prose prose-sm max-w-none", msg.role === "user" ? "prose-invert" : "text-gray-700")}>
+                                                <ReactMarkdown>
                                                     {msg.content}
-                                                </p>
-                                            )}
+                                                </ReactMarkdown>
+                                            </div>
                                         </div>
 
                                         {msg.role === "user" && (
-                                            <div className="w-10 h-10 rounded-xl bg-gray-200 text-gray-600 flex items-center justify-center shrink-0">
+                                            <div className="w-10 h-10 rounded-xl bg-gray-200 text-gray-600 flex items-center justify-center shrink-0 mt-2">
                                                 <User size={20} />
                                             </div>
                                         )}
@@ -298,7 +195,7 @@ export default function ChatPage() {
                             </AnimatePresence>
 
                             {/* Typing Indicator */}
-                            {isGenerating && (
+                            {isLoading && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -324,39 +221,46 @@ export default function ChatPage() {
                         <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-6 bg-gradient-to-t from-[#F8F9FB] via-[#F8F9FB]/95 to-transparent z-20">
                             <div className="max-w-3xl mx-auto">
                                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                                    <div className="flex items-center justify-between px-5 pt-4">
-                                        <span className="text-xs font-medium text-gray-400">Follow-up question</span>
-                                    </div>
-                                    <textarea
-                                        value={query}
-                                        onChange={(e) => setQuery(e.target.value)}
-                                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                                        placeholder="Ask a follow-up..."
-                                        rows={2}
-                                        className="w-full px-5 py-3 bg-transparent resize-none focus:outline-none text-gray-700 placeholder:text-gray-400 text-sm"
-                                    />
-                                    <div className="flex items-center justify-between px-5 pb-4">
-                                        <div className="flex items-center gap-4">
-                                            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
-                                                <Upload size={16} /> Upload image
-                                            </button>
-                                            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
-                                                <Plus size={16} /> Add attachment
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="flex items-center justify-between px-5 pt-4">
+                                            <span className="text-xs font-medium text-gray-400">Follow-up question</span>
+                                        </div>
+                                        <textarea
+                                            value={input}
+                                            onChange={handleInputChange}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleSubmit(e as any);
+                                                }
+                                            }}
+                                            placeholder="Ask a follow-up..."
+                                            rows={2}
+                                            className="w-full px-5 py-3 bg-transparent resize-none focus:outline-none text-gray-700 placeholder:text-gray-400 text-sm"
+                                        />
+                                        <div className="flex items-center justify-between px-5 pb-4">
+                                            <div className="flex items-center gap-4">
+                                                <button type="button" className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
+                                                    <Upload size={16} /> Upload image
+                                                </button>
+                                                <button type="button" className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#1E2A5E] transition-colors">
+                                                    <Plus size={16} /> Add attachment
+                                                </button>
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={!input.trim() || isLoading}
+                                                className={clsx(
+                                                    "flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all",
+                                                    input.trim() && !isLoading
+                                                        ? "bg-[#1A1D2D] text-white hover:bg-black shadow-lg"
+                                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                                )}
+                                            >
+                                                {isLoading ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
                                             </button>
                                         </div>
-                                        <button
-                                            onClick={handleSend}
-                                            disabled={!query.trim() || isGenerating}
-                                            className={clsx(
-                                                "flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all",
-                                                query.trim() && !isGenerating
-                                                    ? "bg-[#1A1D2D] text-white hover:bg-black shadow-lg"
-                                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                            )}
-                                        >
-                                            {isGenerating ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-                                        </button>
-                                    </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>

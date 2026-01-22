@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Image, File, Table2, Search, Filter, Plus, MoreVertical, Download, Trash2, Eye, X, Upload, Check, Clock } from "lucide-react";
+import { FileText, Image, File, Table2, Search, Filter, Plus, MoreVertical, Download, Trash2, Eye, X, Upload, Check, Clock, Loader2 } from "lucide-react";
 import clsx from "clsx";
 
 // --- Types ---
@@ -34,37 +34,61 @@ const FILE_TYPES = [
     { id: "image", label: "Images", icon: <Image size={14} /> },
 ];
 
+import { useFileUpload } from "@/hooks/use-file-upload";
+
 // --- Upload Modal Component ---
-function UploadModal({ isOpen, onClose, onUpload }: { isOpen: boolean; onClose: () => void; onUpload: (files: File[]) => void }) {
-    const [uploadingFiles, setUploadingFiles] = useState<{ name: string; progress: number; status: "uploading" | "completed" | "error" }[]>([]);
-    const [isDragging, setIsDragging] = useState(false);
+function UploadModal({ isOpen, onClose, onUploadSuccess }: { isOpen: boolean; onClose: () => void; onUploadSuccess: (file: any) => void }) {
+    const { uploadFile, uploading, progress, error } = useFileUpload();
+    const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+    const [uploadStatuses, setUploadStatuses] = useState<{ name: string; status: 'pending' | 'uploading' | 'completed' | 'error'; progress: number }[]>([]);
 
-    const simulateUpload = (fileName: string) => {
-        setUploadingFiles(prev => [...prev, { name: fileName, progress: 0, status: "uploading" }]);
-
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 30;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(interval);
-                setUploadingFiles(prev => prev.map(f => f.name === fileName ? { ...f, progress: 100, status: "completed" } : f));
-            } else {
-                setUploadingFiles(prev => prev.map(f => f.name === fileName ? { ...f, progress } : f));
-            }
-        }, 500);
+    const handleFiles = (fList: File[]) => {
+        setFilesToUpload(prev => [...prev, ...fList]);
+        setUploadStatuses(prev => [
+            ...prev,
+            ...fList.map(f => ({ name: f.name, status: 'pending' as const, progress: 0 }))
+        ]);
     };
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
-        setIsDragging(false);
-        const files = Array.from(e.dataTransfer.files);
-        files.forEach(f => simulateUpload(f.name));
+        handleFiles(Array.from(e.dataTransfer.files));
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        files.forEach(f => simulateUpload(f.name));
+        handleFiles(Array.from(e.target.files || []));
+    };
+
+    const startUpload = async () => {
+        for (const file of filesToUpload) {
+            // Skip already uploaded
+            if (uploadStatuses.find(s => s.name === file.name)?.status === 'completed') continue;
+
+            setUploadStatuses(prev => prev.map(s => s.name === file.name ? { ...s, status: 'uploading' } : s));
+
+            // Logic to sync progress from single hook to multi-file list is tricky with simple hook
+            // For MVP, we stream one by one and use the hook's progress for the current file
+            // Ideally useFileUpload should handle multiple or be instantiated per file. 
+            // We will simplify: instantiated hook uploadFile returns promise.
+            // We will just show "Uploading..." with indeterminate or single progress bar if simple.
+
+            // To properly track progress of *current* file:
+            const result = await uploadFile(file);
+
+            if (result) {
+                setUploadStatuses(prev => prev.map(s => s.name === file.name ? { ...s, status: 'completed', progress: 100 } : s));
+                onUploadSuccess({
+                    id: result.publicId,
+                    name: file.name,
+                    type: result.format === 'pdf' ? 'pdf' : result.format?.includes('image') ? 'image' : 'doc',
+                    size: (result.bytes / 1024 / 1024).toFixed(2) + ' MB',
+                    uploadedBy: { name: 'You', email: 'you@university.edu', avatar: 'YU' },
+                    lastModified: 'Just now'
+                });
+            } else {
+                setUploadStatuses(prev => prev.map(s => s.name === file.name ? { ...s, status: 'error' } : s));
+            }
+        }
     };
 
     return (
@@ -103,13 +127,9 @@ function UploadModal({ isOpen, onClose, onUpload }: { isOpen: boolean; onClose: 
 
                             {/* Drop Zone */}
                             <div
-                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                onDragLeave={() => setIsDragging(false)}
+                                onDragOver={(e) => e.preventDefault()}
                                 onDrop={handleDrop}
-                                className={clsx(
-                                    "border-2 border-dashed rounded-xl p-8 text-center transition-colors mb-6",
-                                    isDragging ? "border-blue-400 bg-blue-50" : "border-gray-200 hover:border-gray-300"
-                                )}
+                                className="border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 rounded-xl p-8 text-center transition-colors mb-6"
                             >
                                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
                                     <Upload size={24} className="text-gray-400" />
@@ -124,49 +144,32 @@ function UploadModal({ isOpen, onClose, onUpload }: { isOpen: boolean; onClose: 
                                 <p className="text-xs text-gray-400 mt-2">PDF, DOC, XLS, and images up to 50 MB</p>
                             </div>
 
-                            {/* Uploading Files */}
-                            {uploadingFiles.length > 0 && (
-                                <div className="space-y-3 mb-6">
-                                    {uploadingFiles.map((file, i) => (
-                                        <div key={i} className="p-4 bg-gray-50 rounded-xl">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="px-2 py-1 bg-blue-500 text-white text-xs font-bold rounded">
-                                                        {file.name.split('.').pop()?.toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{file.name}</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {file.status === "completed" ? (
-                                                                <span className="text-green-500 flex items-center gap-1"><Check size={12} /> Completed</span>
-                                                            ) : (
-                                                                <span className="text-blue-500 flex items-center gap-1"><Clock size={12} /> Uploading...</span>
-                                                            )}
-                                                        </p>
-                                                    </div>
+                            {/* File List */}
+                            {uploadStatuses.length > 0 && (
+                                <div className="space-y-3 mb-6 max-h-48 overflow-y-auto">
+                                    {uploadStatuses.map((file, i) => (
+                                        <div key={i} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded">
+                                                    {file.name.split('.').pop()?.toUpperCase()}
                                                 </div>
-                                                {file.status === "completed" ? (
-                                                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                                                        <Check size={12} className="text-white" />
-                                                    </div>
-                                                ) : (
-                                                    <button className="text-gray-400 hover:text-red-500">
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                )}
+                                                <div className="truncate">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {file.status === 'completed' ? <span className="text-green-600">Completed</span> :
+                                                            file.status === 'error' ? <span className="text-red-600">Error</span> :
+                                                                file.status === 'uploading' ? <span className="text-blue-600">Uploading...</span> : 'Pending'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                                <motion.div
-                                                    initial={{ width: 0 }}
-                                                    animate={{ width: `${file.progress}%` }}
-                                                    className={clsx("h-full rounded-full", file.status === "completed" ? "bg-green-500" : "bg-blue-500")}
-                                                />
-                                            </div>
-                                            <p className="text-xs text-gray-400 text-right mt-1">{Math.round(file.progress)}%</p>
+                                            {file.status === 'completed' && <Check size={16} className="text-green-500 shrink-0" />}
+                                            {file.status === 'uploading' && <Loader2 size={16} className="text-blue-500 animate-spin shrink-0" />}
                                         </div>
                                     ))}
                                 </div>
                             )}
+
+                            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
                             {/* Actions */}
                             <div className="flex items-center justify-between">
@@ -174,16 +177,17 @@ function UploadModal({ isOpen, onClose, onUpload }: { isOpen: boolean; onClose: 
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={onClose}
-                                    disabled={uploadingFiles.length === 0 || uploadingFiles.some(f => f.status === "uploading")}
+                                    onClick={startUpload}
+                                    disabled={uploading || filesToUpload.length === 0}
                                     className={clsx(
-                                        "px-6 py-2.5 rounded-lg font-medium transition-all",
-                                        uploadingFiles.length > 0 && uploadingFiles.every(f => f.status === "completed")
-                                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                        "px-6 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2",
+                                        uploading || filesToUpload.length === 0
+                                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "bg-blue-500 text-white hover:bg-blue-600"
                                     )}
                                 >
-                                    Upload Files
+                                    {uploading ? <Loader2 size={16} className="animate-spin" /> : null}
+                                    {uploading ? 'Uploading...' : 'Upload Files'}
                                 </button>
                             </div>
                         </div>
@@ -373,7 +377,11 @@ export default function UploadsPage() {
             <UploadModal
                 isOpen={showUploadModal}
                 onClose={() => setShowUploadModal(false)}
-                onUpload={(files) => console.log("Uploading:", files)}
+                onUploadSuccess={(newFile) => {
+                    setFiles(prev => [newFile, ...prev]);
+                    // Optional: Close modal after all done, or keep open. 
+                    // For now, let user close manually or we can close if we want.
+                }}
             />
         </div>
     );
