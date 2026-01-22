@@ -46,7 +46,7 @@ export default function DashboardShell({
             {/* Main Content */}
             <motion.div
                 layout
-                className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out ${isSidebarOpen ? "lg:pl-64" : "lg:pl-20"
+                className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden ${isSidebarOpen ? "lg:pl-64" : "lg:pl-20"
                     }`}
             >
                 {/* Mobile Header / Top Bar */}
@@ -61,7 +61,7 @@ export default function DashboardShell({
                     <div className="w-8" /> {/* Spacer for centering if needed */}
                 </header>
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-full mx-auto">
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full max-w-full mx-auto overflow-x-hidden">
                     {children}
                 </main>
             </motion.div>

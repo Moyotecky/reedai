@@ -43,7 +43,7 @@ const SIDEBAR_ITEMS = [
     {
         category: "Community",
         items: [
-            { label: "Community", href: "/community", icon: Users },
+            { label: "Community", href: "/dashboard/community", icon: Users },
         ]
     },
     {
