@@ -4,7 +4,7 @@ interface WelcomeHeaderProps {
 
 const WelcomeHeader = ({ username = "User" }: WelcomeHeaderProps) => {
     return (
-        <div className="mb-8">
+        <div>
             <h1 className="text-3xl sm:text-4xl font-bold font-dm-sans tracking-tight text-[#1E2A5E]">
                 Welcome back, {username}
             </h1>

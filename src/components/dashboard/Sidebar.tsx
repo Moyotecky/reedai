@@ -27,7 +27,7 @@ const SIDEBAR_ITEMS = [
         category: "Primary",
         items: [
             { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-            { label: "Tutor", href: "/tutor", icon: Mic },
+            { label: "Tutor", href: "/dashboard/tutor", icon: Mic },
             { label: "Chat", href: "/chat", icon: MessageSquare },
             { label: "Notebooks", href: "/notebooks", icon: BookOpen },
             { label: "Tasks", href: "/tasks", icon: CheckSquare },

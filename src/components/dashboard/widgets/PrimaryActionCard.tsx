@@ -1,4 +1,5 @@
 import { Mic } from "lucide-react";
+import Link from "next/link";
 
 interface PrimaryActionCardProps {
     tutorName?: string;
@@ -7,7 +8,7 @@ interface PrimaryActionCardProps {
 
 const PrimaryActionCard = ({ tutorName = "Alex", tutorStyle = "Exam-focused Tutor" }: PrimaryActionCardProps) => {
     return (
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 h-full">
             <div className="flex items-center gap-4 sm:gap-6">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-indigo-50 border-2 border-white shadow-sm flex items-center justify-center text-3xl">
                     👨‍🏫
@@ -24,10 +25,12 @@ const PrimaryActionCard = ({ tutorName = "Alex", tutorStyle = "Exam-focused Tuto
             </div>
 
             <div className="flex flex-col sm:items-end gap-3 w-full sm:w-auto">
-                <button className="btn-base btn-blue py-3 px-8 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100">
-                    <Mic size={20} />
-                    Start voice session
-                </button>
+                <Link href="/dashboard/call">
+                    <button className="btn-base btn-blue py-3 px-8 flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 w-full sm:w-auto">
+                        <Mic size={20} />
+                        Start voice session
+                    </button>
+                </Link>
                 <button className="text-sm font-medium text-gray-500 hover:text-[#1E2A5E] transition-colors">
                     Switch tutor
                 </button>
