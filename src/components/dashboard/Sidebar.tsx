@@ -28,16 +28,16 @@ const SIDEBAR_ITEMS = [
         items: [
             { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
             { label: "Tutor", href: "/dashboard/tutor", icon: Mic },
-            { label: "Chat", href: "/chat", icon: MessageSquare },
-            { label: "Notebooks", href: "/notebooks", icon: BookOpen },
-            { label: "Tasks", href: "/tasks", icon: CheckSquare },
+            { label: "Chat", href: "/dashboard/chat", icon: MessageSquare },
+            { label: "Notebooks", href: "/dashboard/notebooks", icon: BookOpen },
+            { label: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
         ]
     },
     {
         category: "Study Resources",
         items: [
-            { label: "Uploads", href: "/uploads", icon: UploadCloud },
-            { label: "Call History", href: "/history", icon: History },
+            { label: "Uploads", href: "/dashboard/uploads", icon: UploadCloud },
+            { label: "Call History", href: "/dashboard/history", icon: History },
         ]
     },
     {
@@ -49,8 +49,8 @@ const SIDEBAR_ITEMS = [
     {
         category: "Account & Billing",
         items: [
-            { label: "Credits", href: "/credits", icon: CreditCard },
-            { label: "Settings", href: "/settings", icon: Settings },
+            { label: "Credits", href: "/dashboard/credits", icon: CreditCard },
+            { label: "Settings", href: "/dashboard/settings", icon: Settings },
         ]
     }
 ];
