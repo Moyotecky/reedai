@@ -14,7 +14,7 @@ const FormButton = ({
     ...props
 }: FormButtonProps) => {
     const variants = {
-        primary: "bg-[#2EC4B6] hover:bg-[#25a094] text-white shadow-sm border border-transparent",
+        primary: "bg-[#1E2A5E] hover:bg-[#15204a] text-white shadow-sm border border-transparent",
         secondary: "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm",
         ghost: "bg-transparent hover:bg-gray-50 text-gray-600 hover:text-gray-900",
     };

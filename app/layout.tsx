@@ -16,9 +16,6 @@ export const metadata: Metadata = {
     },
 };
 
-import Header from "@/components/header/Header";
-import Footer from "@/components/footer/Footer";
-
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -27,9 +24,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${GeistSans.variable} ${dmSans.variable} font-sans`}>
-                <Header />
                 {children}
-                <Footer />
             </body>
         </html>
     );
