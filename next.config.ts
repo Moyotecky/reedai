@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
                 protocol: "https",
                 hostname: "www.notion.com",
             },
+            {
+                protocol: "https",
+                hostname: "placehold.co",
+            },
+            {
+                protocol: "https",
+                hostname: "upload.wikimedia.org",
+            },
+            {
+                protocol: "https",
+                hostname: "cdn-icons-png.flaticon.com",
+            },
         ],
     },
 };

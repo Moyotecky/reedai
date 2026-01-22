@@ -1,11 +1,21 @@
-import { SHOWCASE_ARTICLES } from "@/lib/CONSTANTS";
+import { SHOWCASE_ARTICLES, ShowcaseArticle } from "@/lib/CONSTANTS";
 import Article from "./Article";
 
-const Showcase = () => {
+interface ShowcaseProps {
+    articles?: ShowcaseArticle[];
+    quote?: string;
+    author?: string;
+}
+
+const Showcase = ({
+    articles = SHOWCASE_ARTICLES,
+    quote = "A tutor that actually listens.",
+    author = "— ReedAI"
+}: ShowcaseProps) => {
     return (
         <section className="section-container mt-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                {SHOWCASE_ARTICLES?.map((article) => (
+                {articles?.map((article) => (
                     <Article
                         key={article.id}
                         article={article}
@@ -15,17 +25,11 @@ const Showcase = () => {
 
             <div className="py-32 flex justify-center">
                 <figure className="text-center space-y-4">
-                    <blockquote className="text-3xl md:text-4xl font-light tracking-wide font-crimson blockquote-with-quotes break-words">
-                        Your AI everything app.
+                    <blockquote className="text-3xl md:text-4xl font-light tracking-wide font-dm-sans blockquote-with-quotes break-words">
+                        {quote}
                     </blockquote>
                     <figcaption>
-                        <img
-                            src="https://images.ctfassets.net/spoqsaf9291f/3FH43ruDfwZILGSgjnJ2sn/82bb2e9bfd3521c58e53a395bd72c6f6/forbes.png"
-                            alt="forbes"
-                            width="80"
-                            height="20"
-                            className="mx-auto"
-                        />
+                        <span className="text-white-70 font-medium">{author}</span>
                     </figcaption>
                 </figure>
             </div>

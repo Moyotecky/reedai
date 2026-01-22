@@ -13,18 +13,18 @@ const Article = ({ article }: ArticleProps) => {
     const { icon, title, isNew, desc, coverImg, coverImgSm, gif, bgColor, borderColor, href } =
         article;
 
-    const isProject = title === "Projects";
+    const isProject = title === "Voice Tutor";
 
     return (
         <article
             className={clsx(
                 "relative rounded-xl group border-[1.5px] border-transparent overflow-hidden",
-                bgColor,
-                borderColor,
+                bgColor || "bg-white",
+                borderColor || "border-gray-100",
                 isProject && "lg:col-span-2"
             )}>
             {/* Content Wrapper */}
-            <div className={clsx(isProject && "lg:h-[270px] lg:flex")}>
+            <div className={clsx(isProject && "lg:h-[270px] lg:flex", !coverImg && !gif && "p-6")}>
                 <ArticleHeader
                     title={title}
                     icon={icon}
@@ -32,18 +32,22 @@ const Article = ({ article }: ArticleProps) => {
                     desc={desc}
                     isProject={isProject}
                 />
-                <ArticleMedia
-                    coverImg={coverImg}
-                    coverImgSm={coverImgSm}
-                    isProject={isProject}
-                />
+                {coverImg && (
+                    <ArticleMedia
+                        coverImg={coverImg}
+                        coverImgSm={coverImgSm}
+                        isProject={isProject}
+                    />
+                )}
             </div>
 
             {/* Fancy Gif Badge */}
-            <GifBadge
-                gif={gif}
-                isProject={isProject}
-            />
+            {gif && (
+                <GifBadge
+                    gif={gif}
+                    isProject={isProject}
+                />
+            )}
 
             {/* Clickable overlay link */}
             <a

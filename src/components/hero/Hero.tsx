@@ -24,22 +24,22 @@ const HERO_COPY: HeroCopy = {
     ],
 };
 
-const Hero = () => {
+const Hero = ({ copy = HERO_COPY, variant = "split" }: { copy?: HeroCopy, variant?: "split" | "centered" }) => {
     return (
         <section className="hero-container pt-16 lg:pt-32">
-            <div className="flex flex-col-reverse lg:flex-row lg:items-stretch lg:gap-8">
-                {/* Left column */}
-                <div className="flex-1 mt-20 lg:m-0">
-                    <div className="text-center lg:text-left">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-wide leading-[1.2]">
-                            {HERO_COPY.title}
+            <div className={`flex flex-col-reverse ${variant === 'split' ? 'lg:flex-row lg:items-stretch lg:gap-8' : 'lg:flex-col lg:items-center lg:text-center text-center gap-10'} `}>
+                {/* Left column / Top Content */}
+                <div className={`${variant === 'split' ? 'flex-1 mt-20 lg:m-0' : 'w-full max-w-4xl mx-auto mt-10'}`}>
+                    <div className={`text-center ${variant === 'split' ? 'lg:text-left' : ''}`}>
+                        <h1 className="text-2xl sm:text-5xl lg:text-6xl font-bold tracking-[-1.5] leading-[1.2] font-dm-sans">
+                            {copy.title}
                         </h1>
-                        <h2 className="font-medium mt-6 mb-4 text-lg sm:text-xl lg:text-[23px] lg:max-w-sm">
-                            {HERO_COPY.subtitle}
+                        <h2 className={`font-medium mt-6 mb-4 text-lg sm:text-xl lg:text-[23px] ${variant === 'centered' ? 'mx-auto' : 'lg:max-w-sm'}`}>
+                            {copy.subtitle}
                         </h2>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 justify-center lg:justify-start">
-                        {HERO_COPY.cta.map((btn) => (
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 justify-center ${variant === 'split' ? 'lg:justify-start' : ''} ${variant === 'centered' ? 'max-w-md mx-auto' : ''}`}>
+                        {copy.cta.map((btn) => (
                             <a
                                 key={btn.label}
                                 href={btn.href}
@@ -50,10 +50,10 @@ const Hero = () => {
                     </div>
                 </div>
 
-                {/* Right Column */}
-                <div className="flex-1 py-0 relative">
+                {/* Right Column / Bottom Media */}
+                <div className={`${variant === 'split' ? 'flex-1 py-0 relative' : 'w-full max-w-5xl mx-auto mt-10'}`}>
                     <HeroPicture />
-                    <HeroVideo />
+                    {variant === 'split' && <HeroVideo />}
                 </div>
             </div>
 

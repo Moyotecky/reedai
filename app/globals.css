@@ -17,14 +17,13 @@
 	--color-accent-teal: #2ec4b6;
 	/* Soft Teal */
 
-	--font-work-sans: "Work Sans", serif;
-	--font-crimson: "Crimson Text", serif;
-	--font-serif: serif;
+	--font-geist: var(--font-geist-sans);
+	--font-dm-sans: var(--font-dm-sans);
 }
 
 @layer base {
 	body {
-		@apply font-work-sans;
+		@apply font-geist text-[#1F2937];
 	}
 }
 

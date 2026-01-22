@@ -11,7 +11,7 @@ interface ArticleHeaderProps {
 
 const ArticleHeader = ({ title, icon, isNew, desc, isProject }: ArticleHeaderProps) => {
     return (
-        <header className="lg:w-[40%] p-5">
+        <header className={clsx("p-5", isProject ? "lg:w-[40%]" : "w-full")}>
             {/* Title Row */}
             <div className="flex items-center gap-2">
                 <img
