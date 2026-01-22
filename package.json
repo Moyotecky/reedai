@@ -1,0 +1,27 @@
+{
+  "name": "notion-landing-page",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.537.0",
+    "next": "^15.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-fast-marquee": "^1.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.9",
+    "@types/react-dom": "^19.1.7",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.7.0"
+  }
+}
