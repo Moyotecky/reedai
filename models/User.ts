@@ -3,9 +3,12 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IUser extends Document {
     email: string;
     passwordHash: string;
-    name: string;
+    name?: string;
     displayName?: string;
-    username: string;
+    username?: string;
+    isVerified: boolean;
+    verificationCode?: string;
+    verificationExpires?: Date;
     avatar?: string;
     credits: number;
     preferences: {
@@ -33,7 +36,6 @@ const UserSchema: Schema = new Schema({
     },
     name: {
         type: String,
-        required: [true, 'Please provide a name'],
         trim: true,
     },
     displayName: {
@@ -42,10 +44,22 @@ const UserSchema: Schema = new Schema({
     },
     username: {
         type: String,
-        required: [true, 'Please provide a username'],
         unique: true,
+        sparse: true, // Allow multiple nulls/undefined until set
         trim: true,
         lowercase: true,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationCode: {
+        type: String,
+        select: false,
+    },
+    verificationExpires: {
+        type: Date,
+        select: false,
     },
     avatar: {
         type: String,
@@ -53,7 +67,7 @@ const UserSchema: Schema = new Schema({
     },
     credits: {
         type: Number,
-        default: 100, // Starting credits
+        default: 0, // 0 until verification, then maybe bonus?
     },
     preferences: {
         tutorStyle: { type: String, default: 'exam' },

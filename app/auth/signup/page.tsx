@@ -85,22 +85,6 @@ export default function SignupPage() {
 
             <form className="space-y-5" onSubmit={handleSignup}>
                 <FormInput
-                    label="Full Name"
-                    type="text"
-                    placeholder="John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                />
-                <FormInput
-                    label="Username"
-                    type="text"
-                    placeholder="johndoe123"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                />
-                <FormInput
                     label="Email address"
                     type="email"
                     placeholder="name@example.com"
@@ -132,7 +116,7 @@ export default function SignupPage() {
 
                 <div className="pt-2">
                     <FormButton fullWidth type="submit" disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin mx-auto" /> : "Create account"}
+                        {loading ? <Loader2 className="animate-spin mx-auto" /> : "Continue"}
                     </FormButton>
                 </div>
             </form>

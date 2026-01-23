@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.18",
+    "@ai-sdk/react": "^3.0.50",
     "@livekit/components-react": "^2.9.19",
     "@livekit/components-styles": "^1.2.0",
     "@nanostores/react": "github:ai/react",
     "ai": "^6.0.48",
+    "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",

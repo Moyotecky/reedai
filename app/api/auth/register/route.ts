@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
-import { hashPassword, signToken } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function POST(req: NextRequest) {
@@ -10,69 +9,59 @@ export async function POST(req: NextRequest) {
         await connectToDatabase();
 
         const body = await req.json();
-        const { email, password, username, name } = body;
+        const { email, password } = body;
 
-        // Validation
-        if (!email || !password || !username || !name) {
+        // Validation - Only Email/Pw
+        if (!email || !password) {
             return errorResponse('Missing required fields', 400);
         }
 
         // Check if user exists
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }]
-        });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            return errorResponse('User with this email or username already exists', 409);
+            // If exists but not verified, we could resend OTP? 
+            // For now simpler: Conflict.
+            return errorResponse('User with this email already exists', 409);
         }
 
         // Hash password
         const passwordHash = await hashPassword(password);
 
-        // Create User
+        // Generate OTP
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const verificationExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        // Create User (Unverified)
         const user = await User.create({
             email,
-            username,
-            name,
-            displayName: name.split(' ')[0], // Default display name
             passwordHash,
-            credits: 100, // Sign up bonus
+            isVerified: false,
+            verificationCode,
+            verificationExpires,
+            username: `user_${Date.now()}`, // Temp username needed for uniqueness
+            name: 'New User', // Temp name
+            credits: 0,
         });
 
-        // Generate Token
-        const token = signToken({
-            userId: user._id as string,
-            email: user.email,
-            role: user.role,
-        });
-
-        // Set Cookie
-        cookies().set('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60, // 7 days
-            path: '/',
-        });
-
-        // Send Welcome Email (Async)
-        import('@/lib/email').then(({ sendEmail }) => {
-            sendEmail({
-                to: user.email,
-                subject: 'Welcome to ReedAI! 🚀',
-                template: { type: 'welcome', name: user.name }
-            }).catch((err: any) => console.error('Failed to send welcome email', err));
-        });
+        // Send OTP Email
+        try {
+            const { sendEmail } = await import('@/lib/email');
+            await sendEmail({
+                to: email,
+                subject: 'Verify your ReedAI Account',
+                template: { type: 'otp', otp: verificationCode }
+            });
+        } catch (emailError) {
+            console.error("Failed to send OTP email", emailError);
+            // Optionally rollback user creation or just return success with warning?
+            // Safer to return success but log error heavily. User can request resend later.
+        }
 
         return successResponse({
-            token,
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                credits: user.credits,
-            }
-        }, 'User registered successfully', 201);
+            email: user.email,
+            id: user._id
+        }, 'Account created. Please verify your email.', 201);
 
     } catch (error: any) {
         console.error('Registration Error:', error);

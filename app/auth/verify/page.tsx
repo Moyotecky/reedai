@@ -1,45 +1,111 @@
 "use client";
 
-import Link from "next/link";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthLayout from "@/components/auth/AuthLayout";
 import FormButton from "@/components/auth/FormButton";
+import { Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
 
-export default function VerifyEmailPage() {
+function VerifyContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const email = searchParams.get("email");
+
+    const [otp, setOtp] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/auth/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || data.message || "Verification failed");
+            }
+
+            // Success -> Go to Onboarding
+            router.push("/onboarding");
+
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || "Invalid code");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!email) {
+        return (
+            <div className="text-center">
+                <p className="text-red-500 mb-4">Email not found. Please sign up again.</p>
+                <Link href="/auth/signup" className="text-blue-600 underline">Back to Signup</Link>
+            </div>
+        );
+    }
+
     return (
         <AuthLayout>
-            <div className="space-y-4 mb-8 text-center sm:text-left">
-                <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mb-6 mx-auto sm:mx-0">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                </div>
-
+            <div className="space-y-2 mb-8">
                 <h1 className="text-3xl font-bold font-dm-sans tracking-tight text-[#1E2A5E]">
                     Check your email
                 </h1>
-                <p className="text-gray-500 leading-relaxed">
-                    We’ve sent a verification link to your email address. <br className="hidden sm:block" />
-                    Please verify your email to unlock all features.
+                <p className="text-gray-500">
+                    We sent a verification code to <span className="font-medium text-gray-900">{email}</span>.
                 </p>
             </div>
 
-            <div className="space-y-4">
-                <Link href="/onboarding/profile">
-                    <FormButton fullWidth variant="secondary">
-                        Resend email
-                    </FormButton>
-                </Link>
-
-                <p className="text-sm text-gray-500 text-center sm:text-left border-t border-gray-100 pt-6 mt-6">
-                    You can continue exploring ReedAI, but posting and payments are locked until verification.
-                </p>
-
-                <div className="pt-2 flex justify-center sm:justify-start">
-                    <Link href="/auth/login" className="text-sm font-medium text-gray-400 hover:text-gray-600 flex items-center gap-2">
-                        ← Back to sign in
-                    </Link>
+            {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2 mb-6">
+                    <AlertCircle size={16} />
+                    {error}
                 </div>
+            )}
+
+            <form onSubmit={handleVerify} className="space-y-6">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5 ml-0.5">
+                        Verification Code
+                    </label>
+                    <input
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1E2A5E]/10 focus:border-[#1E2A5E] text-center text-2xl tracking-[1em] font-mono transition-all"
+                        placeholder="000000"
+                        required
+                    />
+                </div>
+
+                <FormButton fullWidth type="submit" disabled={loading || otp.length < 6}>
+                    {loading ? <Loader2 className="animate-spin mx-auto" /> : "Verify Email"}
+                </FormButton>
+            </form>
+
+            <div className="mt-8 text-center text-sm">
+                <span className="text-gray-500">Didn't receive code? </span>
+                <button className="font-medium text-[#2EC4B6] hover:underline" onClick={() => alert("Resend feature coming soon")}>
+                    Resend
+                </button>
             </div>
         </AuthLayout>
+    );
+}
+
+export default function VerifyPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin" /></div>}>
+            <VerifyContent />
+        </Suspense>
     );
 }

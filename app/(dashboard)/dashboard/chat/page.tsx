@@ -2,21 +2,52 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Upload, Send, RefreshCw, Bot, User, Plus } from "lucide-react";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import clsx from "clsx";
-import { useChat } from 'ai/react';
+import { useChat } from '@ai-sdk/react';
 import ReactMarkdown from 'react-markdown';
 
 export default function ChatPage() {
     // 1. Vercel AI SDK Hook
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
-        api: '/api/chat',
-        initialMessages: [{
-            id: '1',
-            role: 'assistant',
-            content: "Hi there! I'm ReedAI. How can I help you with your studies today?"
-        }]
+    // Note: In newer @ai-sdk/react, we manage input/submission manually if helpers are missing
+    const { messages, status, sendMessage, setMessages } = useChat({
+        // api defaults to /api/chat
     });
+
+    // Set initial greeting
+    useEffect(() => {
+        if (messages.length === 0) {
+            setMessages([{
+                id: '1',
+                role: 'assistant',
+                parts: [{ type: 'text', text: "Hi there! I'm ReedAI. How can I help you with your studies today?" }]
+            }]);
+        }
+    }, [messages.length, setMessages]);
+
+    // Manual Input State (Backwards compatibility or Headless mode)
+    const [input, setInput] = useState('');
+    const isLoading = status === 'streaming' || status === 'submitted';
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement> | React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+    };
+
+    const handleSubmit = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!input.trim() || isLoading) return;
+
+        const userMessage = {
+            id: Date.now().toString(),
+            role: 'user' as const,
+            content: input,
+            parts: [{ type: 'text' as const, text: input }]
+        };
+
+        // Append handles the optimistic update + API call
+        await sendMessage(userMessage);
+        setInput('');
+    };
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -180,7 +211,7 @@ export default function ChatPage() {
                                         )}>
                                             <div className={clsx("prose prose-sm max-w-none", msg.role === "user" ? "prose-invert" : "text-gray-700")}>
                                                 <ReactMarkdown>
-                                                    {msg.content}
+                                                    {msg.content || (msg.parts?.map((p: any) => p.text).join(''))}
                                                 </ReactMarkdown>
                                             </div>
                                         </div>

@@ -8,7 +8,8 @@ type EmailTemplate =
     | { type: 'welcome'; name: string }
     | { type: 'purchase-success'; name: string; credits: number; amount: string; reference: string }
     | { type: 'low-credits'; name: string; credits: number }
-    | { type: 'new-login'; name: string; device: string; time: string };
+    | { type: 'new-login'; name: string; device: string; time: string }
+    | { type: 'otp'; otp: string };
 
 // --- Styling Constants ---
 const styles = {
@@ -41,6 +42,24 @@ function generateHtml(template: EmailTemplate): string {
     let content = '';
 
     switch (template.type) {
+        case 'otp':
+            content = `
+                <h1 style="${styles.h1}">Verify Your Email ✉️</h1>
+                <p style="${styles.p}">
+                    Use the following verification code to complete your signup. 
+                    This code will expire in 15 minutes.
+                </p>
+                <div style="background-color: #F3F4F6; padding: 24px; border-radius: 12px; text-align: center; margin: 32px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1E2A5E; font-family: monospace;">
+                        ${template.otp}
+                    </span>
+                </div>
+                <p style="${styles.p}">
+                    If you didn't request this, you can safely ignore this email.
+                </p>
+            `;
+            break;
+
         case 'welcome':
             content = `
                 <h1 style="${styles.h1}">Welcome to ReedAI, ${template.name}! 👋</h1>
