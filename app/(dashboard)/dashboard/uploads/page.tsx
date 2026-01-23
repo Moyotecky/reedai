@@ -406,10 +406,21 @@ export default function UploadsPage() {
                 </div>
 
                 {/* Empty State */}
-                {filteredFiles.length === 0 && (
-                    <div className="text-center py-12">
-                        <File size={40} className="mx-auto text-gray-300 mb-3" />
-                        <p className="text-gray-500">No files found.</p>
+                {!loading && filteredFiles.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white">
+                        <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+                            <Upload className="text-blue-500" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-[#1E2A5E] mb-2">No uploads yet</h3>
+                        <p className="text-gray-500 mb-6 max-w-sm text-center">
+                            Upload your study materials, lecture notes, or syllabus to start researching with AI.
+                        </p>
+                        <button
+                            onClick={() => setShowUploadModal(true)}
+                            className="px-6 py-2.5 bg-[#1E2A5E] text-white rounded-xl font-medium hover:bg-black transition-colors flex items-center gap-2"
+                        >
+                            <Plus size={18} /> Upload Documents
+                        </button>
                     </div>
                 )}
             </div>
