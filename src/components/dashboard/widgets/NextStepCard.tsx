@@ -1,4 +1,5 @@
 import { Sparkles, CheckCircle2 } from "lucide-react";
+import Link from 'next/link';
 
 const NextStepCard = () => {
     return (
@@ -12,13 +13,13 @@ const NextStepCard = () => {
             </div>
 
             <p className="text-lg font-medium mb-6 relative z-10 leading-relaxed">
-                Revisit <span className="text-[#2EC4B6]">Open Sets</span> in Metric Spaces based on your last quiz result.
+                Ready to explore a new topic? <span className="text-[#2EC4B6]">Start a new research session</span> to expand your knowledge.
             </p>
 
             <div className="mt-auto flex items-center gap-3 relative z-10">
-                <button className="flex-1 py-2.5 rounded-xl bg-white text-[#1E2A5E] font-medium text-sm hover:bg-gray-50 transition-colors">
-                    Start session
-                </button>
+                <Link href="/dashboard/chat" className="flex-1 py-2.5 rounded-xl bg-white text-[#1E2A5E] font-medium text-sm hover:bg-gray-50 transition-colors text-center">
+                    New Session
+                </Link>
                 <button className="p-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors" title="Mark as done">
                     <CheckCircle2 size={20} />
                 </button>
