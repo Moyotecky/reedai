@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = 'ReedAI <onboarding@resend.dev>'; // Using resend.dev for testing, change to your domain in prod
+const FROM_EMAIL = 'hello@deelstudio.com';
 
 // --- Types ---
 type EmailTemplate =
