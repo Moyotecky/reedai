@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Image, File, Table2, Search, Filter, Plus, MoreVertical, Download, Trash2, Eye, X, Upload, Check, Clock, Loader2 } from "lucide-react";
 import clsx from "clsx";
+import axios from 'axios';
 
 // --- Types ---
 interface FileItem {
@@ -16,15 +17,7 @@ interface FileItem {
 }
 
 // --- Mock Data ---
-const MOCK_FILES: FileItem[] = [
-    { id: "1", name: "Calculus_III_Notes.pdf", type: "pdf", size: "2.4 MB", uploadedBy: { name: "You", email: "you@university.edu", avatar: "YU" }, lastModified: "Jan 15, 2024" },
-    { id: "2", name: "Linear_Algebra_Formulas.docx", type: "doc", size: "488 KB", uploadedBy: { name: "Sarah Chen", email: "sarah@mit.edu", avatar: "SC" }, lastModified: "Jan 12, 2024" },
-    { id: "3", name: "Statistics_Cheatsheet.pdf", type: "pdf", size: "1.2 MB", uploadedBy: { name: "Alex Johnson", email: "alex@stanford.edu", avatar: "AJ" }, lastModified: "Jan 10, 2024" },
-    { id: "4", name: "Differential_Equations_Summary.pdf", type: "pdf", size: "1.8 MB", uploadedBy: { name: "Maria Garcia", email: "maria@ucla.edu", avatar: "MG" }, lastModified: "Jan 8, 2024" },
-    { id: "5", name: "Exam_Schedule_2024.xlsx", type: "spreadsheet", size: "156 KB", uploadedBy: { name: "You", email: "you@university.edu", avatar: "YU" }, lastModified: "Jan 6, 2024" },
-    { id: "6", name: "Graph_Theory_Diagram.png", type: "image", size: "890 KB", uploadedBy: { name: "James Wilson", email: "james@berkeley.edu", avatar: "JW" }, lastModified: "Jan 4, 2024" },
-    { id: "7", name: "Probability_Notes.pdf", type: "pdf", size: "3.1 MB", uploadedBy: { name: "You", email: "you@university.edu", avatar: "YU" }, lastModified: "Jan 2, 2024" },
-];
+
 
 const FILE_TYPES = [
     { id: "all", label: "View all", icon: null },
@@ -215,11 +208,39 @@ function FileIcon({ type }: { type: FileItem["type"] }) {
 
 // --- Main Page ---
 export default function UploadsPage() {
-    const [files, setFiles] = useState<FileItem[]>(MOCK_FILES);
+    const [files, setFiles] = useState<FileItem[]>([]);
+    const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    // Fetch Files
+    const fetchFiles = async () => {
+        try {
+            const res = await axios.get('/api/uploads');
+            if (res.data.success) {
+                // Map DB schema to UI schema
+                const mappedFiles = res.data.data.map((f: any) => ({
+                    id: f._id,
+                    name: f.name,
+                    type: f.type,
+                    size: (f.size / 1024 / 1024).toFixed(2) + ' MB',
+                    uploadedBy: { name: 'You', email: '', avatar: 'ME' }, // Ideally fetch user info or store it
+                    lastModified: new Date(f.createdAt).toLocaleDateString()
+                }));
+                setFiles(mappedFiles);
+            }
+        } catch (error) {
+            console.error("Failed to fetch files", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchFiles();
+    }, []);
 
     const filteredFiles = files.filter(f => {
         const matchesType = activeFilter === "all" || f.type === activeFilter;
@@ -228,8 +249,28 @@ export default function UploadsPage() {
     });
 
     const handleDelete = (id: string) => {
+        // Optimistic update - ideally call API to delete
         setFiles(prev => prev.filter(f => f.id !== id));
         setOpenMenuId(null);
+    };
+
+    const handleUploadComplete = async (newFilePayload: any) => {
+        // Save to DB
+        try {
+            const res = await axios.post('/api/uploads', {
+                name: newFilePayload.name,
+                url: "https://cloudinary.com/...", // Metadata from payload. In real app, we need the stored URL from use-file-upload hook
+                type: newFilePayload.type,
+                size: parseFloat(newFilePayload.size) * 1024 * 1024, // Approx back to bytes
+                publicId: newFilePayload.id
+            });
+
+            if (res.data.success) {
+                fetchFiles(); // Refresh list
+            }
+        } catch (e) {
+            console.error("Failed to save file metadata", e);
+        }
     };
 
     return (

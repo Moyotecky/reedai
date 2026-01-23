@@ -1,13 +1,85 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, MoreHorizontal, Share, ChevronRight, File, Users, Link as LinkIcon, Lock } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Share, ChevronRight, File, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
 
 export default function NotebookDetail() {
     const params = useParams();
-    const id = params.id;
+    const id = params.id as string;
+
+    const [notebook, setNotebook] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Editable States
+    const [title, setTitle] = useState("");
+    const [content, setContent] = useState("");
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [content]);
+
+    useEffect(() => {
+        const fetchNotebook = async () => {
+            try {
+                const res = await axios.get(`/api/notebooks/${id}`);
+                if (res.data.success) {
+                    setNotebook(res.data.data);
+                    setTitle(res.data.data.title);
+                    setContent(res.data.data.content);
+                } else {
+                    setError("Notebook not found");
+                }
+            } catch (e) {
+                setError("Error loading notebook");
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) fetchNotebook();
+    }, [id]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await axios.put(`/api/notebooks/${id}`, {
+                title,
+                content
+            });
+            // Optional: Show toast success
+        } catch (e) {
+            console.error("Save failed", e);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center">
+            <Loader2 className="animate-spin text-indigo-600" size={32} />
+        </div>
+    );
+
+    if (error) return (
+        <div className="min-h-screen flex flex-col items-center justify-center">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Error</h2>
+            <p className="text-gray-600">{error}</p>
+            <Link href="/dashboard/notebooks" className="mt-4 text-indigo-600 hover:underline">Go back</Link>
+        </div>
+    );
 
     return (
         <div className="min-h-screen bg-[#F8F9FB] p-6 lg:p-10 font-dm-sans flex flex-col">
@@ -19,26 +91,26 @@ export default function NotebookDetail() {
                         <ArrowLeft size={16} /> Notebooks
                     </Link>
                     <ChevronRight size={14} className="opacity-30" />
-                    <span>Reviews</span>
-                    <ChevronRight size={14} className="opacity-30" />
-                    <span className="text-[#1E2A5E] font-bold flex items-center gap-2">
-                        <File size={14} /> My Review Document
+                    <span className="text-[#1E2A5E] font-bold flex items-center gap-2 truncate max-w-[200px]">
+                        <File size={14} /> {title || "Untitled"}
                     </span>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2 mr-2">
-                        {[1, 2].map(i => (
-                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
-                                AH
-                            </div>
-                        ))}
+                    <div className="text-xs text-gray-400 font-medium mr-2">
+                        {saving ? "Saving..." : "Saved"}
                     </div>
+
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="bg-[#1E2A5E] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-900/10 hover:scale-105 transition-all flex items-center gap-2"
+                    >
+                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                        Save
+                    </button>
                     <button className="p-2 hover:bg-white rounded-lg transition-colors text-gray-500">
                         <MoreHorizontal size={20} />
-                    </button>
-                    <button className="bg-[#1E2A5E] text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-indigo-900/10 hover:scale-105 transition-all flex items-center gap-2">
-                        <Share size={16} /> Publish
                     </button>
                 </div>
             </div>
@@ -47,90 +119,59 @@ export default function NotebookDetail() {
             <div className="flex flex-col lg:flex-row gap-8 flex-1">
 
                 {/* Center Content (Paper) */}
-                <div className="flex-1 bg-white rounded-3xl p-8 lg:p-16 shadow-sm min-h-[800px]">
-                    {/* Hero Image Placeholder */}
-                    <div className="w-20 h-20 bg-green-50 rounded-2xl flex items-center justify-center mb-8">
-                        <File size={32} className="text-green-500" />
-                    </div>
+                <div className="flex-1 bg-white rounded-3xl p-8 lg:p-16 shadow-sm min-h-[800px] border border-gray-100">
 
-                    <h1 className="text-4xl font-bold text-[#1E2A5E] mb-2 tracking-tight">My Review Document</h1>
+                    {/* Editable Title */}
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full text-4xl font-bold text-[#1E2A5E] mb-6 tracking-tight border-none focus:ring-0 placeholder:text-gray-300"
+                        placeholder="Untitled Notebook"
+                    />
+
                     <div className="flex items-center gap-2 text-xs text-gray-400 font-medium mb-8">
-                        <span>Created 17 days ago</span>
+                        <span>Created {new Date(notebook.createdAt).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span>Last modified 17 hours ago</span>
+                        <span>Last modified {new Date(notebook.updatedAt).toLocaleDateString()}</span>
                     </div>
 
                     <div className="flex items-center gap-2 mb-10">
-                        <span className="px-3 py-1 bg-green-50 text-green-700 rounded-md text-xs font-bold">Document Tag</span>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-bold">Notes</span>
-                        <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-md text-xs font-bold">Review Doc</span>
+                        {/* Tags (Hardcoded for now / future feature) */}
+                        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-bold">{notebook.subject || 'General'}</span>
                     </div>
 
-                    <div className="prose prose-lg max-w-none text-gray-600 space-y-8">
-                        <h2 className="text-2xl font-bold text-[#1E2A5E]">Sub Title here</h2>
-
-                        <p>
-                            Design Thinking: Design, at its core, is about solving problems and enhancing user experiences.
-                            Design thinking, a human-centered approach, emphasizes empathy, collaboration, and prototyping
-                            to create products that truly resonate with users.
-                        </p>
-
-                        <p>
-                            Technology, with its power to collect and analyze data, complements this process by providing
-                            valuable insights into user behavior and preferences. The design thinking process, when fueled
-                            by technology, leads to more intuitive, user-friendly, and aesthetically pleasing products.
-                        </p>
-
-                        {/* Callout Box */}
-                        <div className="bg-gray-50 border-l-4 border-[#1E2A5E] p-6 rounded-r-xl my-8">
-                            <p className="font-medium text-gray-800 italic">
-                                "In today's fast-paced and ever-evolving world, the fusion of design and technology plays a
-                                pivotal role in shaping the products we use daily. From smartphones to automobiles, this synergy
-                                has transformed the way we interact with and experience the world around us."
-                            </p>
-                        </div>
-                    </div>
+                    {/* Editor Area (Write/Edit functionality) */}
+                    <textarea
+                        ref={textareaRef}
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Start typying your notes here..."
+                        className="w-full min-h-[500px] resize-none border-none focus:ring-0 text-gray-700 text-lg leading-relaxed p-0 placeholder:text-gray-300"
+                    />
                 </div>
 
-                {/* Right Sidebar */}
-                <div className="w-full lg:w-80 space-y-8">
-
-                    {/* Linked Docs */}
+                {/* Right Sidebar (Simplified) */}
+                <div className="w-full lg:w-80 space-y-8 hidden lg:block">
+                    {/* Info Widget */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-[#1E2A5E] mb-4 flex items-center gap-2">
-                            <LinkIcon size={16} /> Linked Docs
-                        </h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer group">
-                                <File size={18} className="text-gray-400 group-hover:text-indigo-500" />
-                                <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 border-b border-gray-200 pb-0.5">Name_of_document_here.pdf</span>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer group">
-                                <File size={18} className="text-gray-400 group-hover:text-indigo-500" />
-                                <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 border-b border-gray-200 pb-0.5">Another_thing_here.pdf</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Contributors */}
-                    {/* Contributors - Commented out as requested
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="font-bold text-[#1E2A5E] mb-4 flex items-center gap-2">
-                            <Users size={16} /> Contributors
+                        <h3 className="font-bold text-[#1E2A5E] mb-4 text-sm uppercase tracking-wide">
+                            Notebook Details
                         </h3>
                         <div className="space-y-4">
-                            {["Beth Lemke", "Brittany Fisher", "Gertrude Gottlieb Jr.", "Alfredo Prosacco"].map((name, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0 overflow-hidden">
-                                        
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700">{name}</span>
+                            <div>
+                                <label className="text-xs text-gray-400 font-bold uppercase block mb-1">Subject</label>
+                                <p className="text-sm font-medium text-gray-700">{notebook.subject || 'Unassigned'}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-400 font-bold uppercase block mb-1">Owner</label>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">ME</div>
+                                    <span className="text-sm font-medium text-gray-700">You</span>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
-                    */}
-
                 </div>
             </div>
         </div>

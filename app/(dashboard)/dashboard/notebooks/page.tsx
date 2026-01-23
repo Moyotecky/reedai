@@ -15,77 +15,31 @@ const TEMPLATES = [
     { label: "Problem Log", icon: <BookOpen size={18} className="text-purple-600" />, bg: "bg-purple-100" },
 ];
 
-const DRAFTS = [
-    {
-        id: "1",
-        title: "Differential Equations: First Order Review",
-        category: "Notes",
-        date: "Sept 05, 2025",
-        color: "bg-white",
-        iconColor: "bg-purple-100 text-purple-600",
-        image: true
-    },
-    {
-        id: "2",
-        title: "Linear Algebra: Eigenvalues & Vectors",
-        category: "Math",
-        date: "Today",
-        color: "bg-yellow-50",
-        iconColor: "bg-yellow-100 text-yellow-600",
-        tags: ["Exam Prep", "Important"]
-    },
-    {
-        id: "3",
-        title: "Calculus III: Multiple Integrals",
-        category: "Homework",
-        date: "June 23, 2025",
-        color: "bg-green-50",
-        iconColor: "bg-green-100 text-green-600"
-    },
-    {
-        id: "4",
-        title: "Probability Theory: Bayes Theorem",
-        category: "Lecture",
-        date: "October 5, 2025",
-        color: "bg-purple-50",
-        iconColor: "bg-purple-100 text-purple-600"
-    },
-    {
-        id: "5",
-        title: "Real Analysis: Convergence Tests",
-        category: "Notes",
-        date: "November 12, 2025",
-        color: "bg-pink-50",
-        iconColor: "bg-pink-100 text-pink-600"
-    },
-    {
-        id: "6",
-        title: "Complex Numbers & Polar Coordinates",
-        category: "Review",
-        date: "July 23, 2025",
-        color: "bg-orange-50",
-        iconColor: "bg-orange-100 text-orange-600",
-        big: true
-    },
-    {
-        id: "7",
-        title: "Discrete Math: Graph Theory",
-        category: "Research",
-        date: "March 7, 2025",
-        color: "bg-yellow-50",
-        iconColor: "bg-yellow-100 text-yellow-600"
-    },
-    {
-        id: "8",
-        title: "Number Theory Basics",
-        category: "Notes",
-        date: "January 7, 2025",
-        color: "bg-rose-50",
-        iconColor: "bg-rose-100 text-rose-600"
-    }
-];
+
+
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function NotebooksDashboard() {
+    const [notebooks, setNotebooks] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchNotebooks = async () => {
+            try {
+                const res = await axios.get('/api/notebooks');
+                if (res.data.success) {
+                    setNotebooks(res.data.data);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchNotebooks();
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#F8F9FB] p-6 lg:p-10 font-dm-sans">
 
@@ -129,47 +83,55 @@ export default function NotebooksDashboard() {
 
             {/* Drafts Grid */}
             <div>
-                <h2 className="text-lg font-bold text-[#1E2A5E] mb-4">My drafts</h2>
-                <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
-                    {DRAFTS.map((draft) => (
-                        <Link href={`/dashboard/notebooks/${draft.id}`} key={draft.id} className="block break-inside-avoid">
-                            <motion.div
-                                whileHover={{ y: -4 }}
-                                className={clsx(
-                                    "p-6 rounded-3xl transition-all hover:shadow-lg relative group",
-                                    draft.color
-                                )}
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className={clsx("px-3 py-1 rounded-lg text-xs font-bold", draft.iconColor)}>
-                                        {draft.category}
-                                    </span>
-                                    <button className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors">
-                                        <FileText size={14} className="opacity-50" />
-                                    </button>
-                                </div>
+                <h2 className="text-lg font-bold text-[#1E2A5E] mb-4">My Notebooks</h2>
 
-                                {draft.image && (
-                                    <div className="mb-6 rounded-2xl bg-[#a0a8ff] h-40 w-full flex items-end justify-center pb-0 overflow-hidden relative">
-                                        {/* Mock illustration */}
-                                        <div className="w-24 h-32 bg-white/20 rounded-t-xl mx-auto" />
-                                    </div>
-                                )}
-
-                                <h3 className="text-xl font-bold text-[#1E2A5E] mb-6 leading-tigher">
-                                    {draft.title}
-                                </h3>
-
-                                <div className="flex items-center justify-between text-xs font-medium text-gray-500 border-t border-black/5 pt-4">
-                                    <span>{draft.date}</span>
-                                    <div className="w-6 h-6 rounded-lg bg-white/50 flex items-center justify-center">
-                                        <FileText size={12} />
-                                    </div>
-                                </div>
-                            </motion.div>
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map(i => <div key={i} className="h-64 bg-gray-100 rounded-3xl animate-pulse" />)}
+                    </div>
+                ) : notebooks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
+                        <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4">
+                            <BookOpen className="text-indigo-500" size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold text-[#1E2A5E] mb-2">No notebooks yet</h3>
+                        <p className="text-gray-500 mb-6">Create your first notebook to start documenting your research.</p>
+                        <Link href="/dashboard/chat" className="px-6 py-2.5 bg-[#1E2A5E] text-white rounded-xl font-medium hover:bg-black transition-colors">
+                            Start Research Chat
                         </Link>
-                    ))}
-                </div>
+                    </div>
+                ) : (
+                    <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+                        {notebooks.map((notebook: any) => (
+                            <Link href={`/dashboard/notebooks/${notebook._id}`} key={notebook._id} className="block break-inside-avoid">
+                                <motion.div
+                                    whileHover={{ y: -4 }}
+                                    className="p-6 rounded-3xl transition-all hover:shadow-lg relative group bg-white border border-gray-100"
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <span className="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-600">
+                                            {notebook.subject || 'General'}
+                                        </span>
+                                        <button className="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors">
+                                            <FileText size={14} className="opacity-50" />
+                                        </button>
+                                    </div>
+
+                                    <h3 className="text-xl font-bold text-[#1E2A5E] mb-6 leading-tigher line-clamp-2">
+                                        {notebook.title}
+                                    </h3>
+
+                                    <div className="flex items-center justify-between text-xs font-medium text-gray-500 border-t border-black/5 pt-4">
+                                        <span>{new Date(notebook.createdAt).toLocaleDateString()}</span>
+                                        <div className="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center">
+                                            <FileText size={12} />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
