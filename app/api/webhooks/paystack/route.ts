@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
                         subject: 'Payment Successful Receipt',
                         template: {
                             type: 'purchase-success',
-                            name: user.name,
+                            name: user.name || 'User',
                             credits: Number(credits),
                             amount: (event.data.amount / 100).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' }),
                             reference

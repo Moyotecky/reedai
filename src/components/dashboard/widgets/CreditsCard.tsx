@@ -1,6 +1,10 @@
 import { ArrowRight, CreditCard } from "lucide-react";
 
-const CreditsCard = () => {
+interface CreditsCardProps {
+    credits?: number;
+}
+
+const CreditsCard = ({ credits = 0 }: CreditsCardProps) => {
     return (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-4">

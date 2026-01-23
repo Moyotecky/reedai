@@ -8,8 +8,9 @@ import ContinueLearningCard from "@/components/dashboard/widgets/ContinueLearnin
 import NextStepCard from "@/components/dashboard/widgets/NextStepCard";
 import RecentNotebooksList from "@/components/dashboard/widgets/RecentNotebooksList";
 import RecentActivityList from "@/components/dashboard/widgets/RecentActivityList";
-import { Mic, Plus } from "lucide-react";
+import { Mic, Plus, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@/hooks/useUser";
 
 // Animation Variants
 const container: Variants = {
@@ -35,6 +36,16 @@ const item: Variants = {
 };
 
 export default function DashboardPage() {
+    const { user, loading } = useUser();
+
+    if (loading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="animate-spin text-[#1E2A5E]" size={32} />
+            </div>
+        );
+    }
+
     return (
         <motion.div
             variants={container}
@@ -44,7 +55,7 @@ export default function DashboardPage() {
         >
             {/* 1. Welcome */}
             <motion.div variants={item} className="mb-2">
-                <WelcomeHeader username="Alex" />
+                <WelcomeHeader username={user?.name || user?.username || "Student"} />
             </motion.div>
 
             {/* Main Grid Layout - Consolidated for consistent spacing */}
@@ -56,7 +67,7 @@ export default function DashboardPage() {
                 </motion.div>
 
                 <motion.div variants={item} className="md:col-span-1 h-full">
-                    <CreditsCard />
+                    <CreditsCard credits={user?.credits || 0} />
                 </motion.div>
 
                 {/* Row 2: Continue (1) + Next (1) + Notebooks (1) */}

@@ -32,13 +32,13 @@ export async function POST(req: NextRequest) {
 
         // Generate Token
         const token = signToken({
-            userId: user._id as string,
+            userId: user._id.toString(),
             email: user.email,
             role: user.role,
         });
 
         // Set Cookie
-        cookies().set('token', token, {
+        (await cookies()).set('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',

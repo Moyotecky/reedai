@@ -12,5 +12,5 @@ export async function POST(req: Request) {
         system: "You are ReedAI, an expert academic tutor. Help the student with their study questions effectively and concisely. Use formatting like bolding and lists to make answers clear.",
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
 }

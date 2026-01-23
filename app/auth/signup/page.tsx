@@ -55,7 +55,7 @@ export default function SignupPage() {
 
             // Success
             router.refresh();
-            router.push("/dashboard");
+            router.push(`/auth/verify?email=${encodeURIComponent(email)}`);
 
         } catch (err: any) {
             console.error("Signup failed:", err);
