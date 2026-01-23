@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from 'axios';
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, BookOpen, FileText, ChevronDown, ChevronUp, Check, Sparkles, Plus, X } from "lucide-react";
 import Link from "next/link";
@@ -14,47 +15,6 @@ interface Task {
     action: { label: string; href?: string; icon: React.ReactNode };
     status: "suggested" | "in_progress" | "completed";
 }
-
-// --- Mock Data ---
-const INITIAL_TASKS: Task[] = [
-    {
-        id: "1",
-        title: "Revisit Open Sets in Metric Spaces",
-        reason: "You seemed unsure about definitions during your last session.",
-        action: { label: "Start with tutor", href: "/dashboard/tutor", icon: <Mic size={14} /> },
-        status: "suggested"
-    },
-    {
-        id: "2",
-        title: "Practice past questions on Limits",
-        reason: "These questions appear frequently in exams.",
-        action: { label: "Practice now", href: "/dashboard/tutor", icon: <Sparkles size={14} /> },
-        status: "suggested"
-    },
-    {
-        id: "3",
-        title: "Review Linear Algebra notebook",
-        reason: "A quick review will strengthen recall.",
-        action: { label: "Open notebook", href: "/dashboard/notebooks/2", icon: <BookOpen size={14} /> },
-        status: "in_progress"
-    },
-    {
-        id: "4",
-        title: "Review distance functions",
-        reason: "Completed during your last session.",
-        action: { label: "Review again", href: "/dashboard/notebooks/1", icon: <FileText size={14} /> },
-        status: "completed"
-    },
-    {
-        id: "5",
-        title: "Revise continuity examples",
-        reason: "Marked as done 2 days ago.",
-        action: { label: "Review again", href: "/dashboard/notebooks/1", icon: <FileText size={14} /> },
-        status: "completed"
-    }
-];
-
-// --- Components ---
 
 function TaskCard({ task, onMarkDone, onStart }: { task: Task; onMarkDone: (id: string) => void; onStart?: (id: string) => void }) {
     const isCompleted = task.status === "completed";
@@ -110,40 +70,73 @@ function TaskCard({ task, onMarkDone, onStart }: { task: Task; onMarkDone: (id: 
 }
 
 export default function TasksPage() {
-    const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [loading, setLoading] = useState(true);
     const [showCompleted, setShowCompleted] = useState(false);
     const [showNewTaskForm, setShowNewTaskForm] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState("");
     const [newTaskReason, setNewTaskReason] = useState("");
+
+    const fetchTasks = async () => {
+        try {
+            const res = await axios.get('/api/tasks');
+            if (res.data.success) {
+                const mappedTasks = res.data.data.map((t: any) => ({
+                    id: t._id,
+                    title: t.title,
+                    reason: t.reason,
+                    action: { label: t.actionLabel, href: t.actionUrl, icon: <Mic size={14} /> },
+                    status: t.status
+                }));
+                setTasks(mappedTasks);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTasks();
+    }, []);
 
     const suggestedTasks = tasks.filter(t => t.status === "suggested");
     const inProgressTasks = tasks.filter(t => t.status === "in_progress");
     const completedTasks = tasks.filter(t => t.status === "completed");
     const hasActiveTasks = suggestedTasks.length > 0 || inProgressTasks.length > 0;
 
-    const handleMarkDone = (id: string) => {
+    const handleMarkDone = async (id: string) => {
+        // Optimistic
         setTasks(prev => prev.map(t => t.id === id ? { ...t, status: "completed" } : t));
+        await axios.put('/api/tasks', { id, status: 'completed' });
     };
 
-    const handleStart = (id: string) => {
+    const handleStart = async (id: string) => {
+        // Optimistic
         setTasks(prev => prev.map(t => t.id === id ? { ...t, status: "in_progress" } : t));
+        await axios.put('/api/tasks', { id, status: 'in_progress' });
     };
 
-    const handleAddTask = () => {
+    const handleAddTask = async () => {
         if (!newTaskTitle.trim()) return;
 
-        const newTask: Task = {
-            id: Date.now().toString(),
-            title: newTaskTitle.trim(),
-            reason: newTaskReason.trim() || "Custom task you added.",
-            action: { label: "Start with tutor", href: "/dashboard/tutor", icon: <Mic size={14} /> },
-            status: "suggested"
-        };
+        try {
+            const res = await axios.post('/api/tasks', {
+                title: newTaskTitle.trim(),
+                reason: newTaskReason.trim(),
+                status: 'suggested'
+            });
 
-        setTasks(prev => [newTask, ...prev]);
-        setNewTaskTitle("");
-        setNewTaskReason("");
-        setShowNewTaskForm(false);
+            if (res.data.success) {
+                fetchTasks();
+                setNewTaskTitle("");
+                setNewTaskReason("");
+                setShowNewTaskForm(false);
+            }
+        } catch (e) {
+            console.error("Failed to add task", e);
+        }
     };
 
     return (

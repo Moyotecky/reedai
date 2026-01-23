@@ -67,7 +67,7 @@ const UserSchema: Schema = new Schema({
     },
     credits: {
         type: Number,
-        default: 0, // 0 until verification, then maybe bonus?
+        default: 20, // 20 free credits for everyone on signup
     },
     preferences: {
         tutorStyle: { type: String, default: 'exam' },
