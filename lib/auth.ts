@@ -47,3 +47,25 @@ export function verifyToken(token: string): AccessTokenPayload | null {
         return null;
     }
 }
+
+/**
+ * Helper to verify auth from request cookies
+ */
+import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
+
+export async function verifyAuth(req: NextRequest): Promise<{ success: boolean; userId?: string; role?: string; error?: string }> {
+    const token = (await cookies()).get('token')?.value;
+
+    if (!token) {
+        return { success: false, error: 'No token provided' };
+    }
+
+    const payload = verifyToken(token);
+
+    if (!payload) {
+        return { success: false, error: 'Invalid token' };
+    }
+
+    return { success: true, userId: payload.userId, role: payload.role };
+}

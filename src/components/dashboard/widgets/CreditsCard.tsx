@@ -15,7 +15,7 @@ const CreditsCard = ({ credits = 0 }: CreditsCardProps) => {
             </div>
 
             <div className="mt-auto">
-                <div className="text-3xl font-bold text-[#1E2A5E] mb-1">240</div>
+                <div className="text-3xl font-bold text-[#1E2A5E] mb-1">{credits}</div>
                 <div className="text-sm text-gray-500 mb-4">Credits remaining</div>
 
                 <button className="text-sm font-medium text-[#2EC4B6] hover:text-[#25a094] flex items-center gap-1 transition-colors">
